@@ -17,15 +17,7 @@
 #include "boost/serialization/vector.hpp"
 #include "boost/archive/text_iarchive.hpp"
 #include "boost/archive/text_oarchive.hpp"
-
-void remove_duplicates(std::vector<std::string>& vec) {
-  	std::sort(vec.begin(), vec.end());
- 	vec.erase(std::unique(vec.begin(), vec.end()), vec.end());
-}
-
-bool sort_pred(const std::pair<int, int> &left, const std::pair<int, int> &right) {
-    return left.first < right.first;
-}
+#include "boost/lexical_cast.hpp"
 
 int main() {
 	// File needed
@@ -47,25 +39,20 @@ int main() {
 	std::vector<std::string> all_date;
 	if (time_series.is_open()) {
 		while (std::getline(time_series,line)) {
+		    std::stringstream linestream(line);
+		    std::string data;
 
-		   	std::istringstream iss(line);
-
-		   	int c = 0;
-		    while (iss) {
-		    	std::string sub;
-		       	iss >> sub;
-		       	switch (c++) {
-		       		case 0:
-		       			all_date.push_back(sub);
-		       			break;
-		       	}	       		 
-		    }
+		    std::getline(linestream, data, '\t'); 
+		    all_date.push_back(data);
 	    }
 	}
   	else std::cout << "Unable to open file";
 
-    remove_duplicates(all_date);
+  	// Removing duplicates of the date
+    std::sort(all_date.begin(), all_date.end());
+ 	all_date.erase(std::unique(all_date.begin(), all_date.end()), all_date.end());
 
+ 	// Creating hash "date_to_id"
     int idDate=0;
 	for (auto i=all_date.begin(); i<all_date.end(); i++) {
 		date_to_id.insert(std::pair<std::string, int>(*i, idDate++));	
@@ -78,30 +65,15 @@ int main() {
 	// Creation of the data structure "pages"
 	if (time_series.is_open()) {
 		while (std::getline(time_series,line)) {
+		    std::stringstream linestream(line);
+		    std::string data;
 
-		   	std::istringstream iss(line);
-
-		   	int c = 0;
-		   	int date;
-		   	std::string name_page;
-		   	int counter;
-
-		    while (iss) {
-		    	std::string sub;
-		       	iss >> sub;
-		       	//std::cout << sub << "\n";
-		       	switch (c++) {
-		       		case 0:
-		       			date = date_to_id.find(sub)->second;
-		       			break;
-		       		case 1:
-		       			name_page = sub;
-		       			break;
-		       		case 2: 
-		       			counter = std::stoi(sub);
-		       			break;
-		       	}	       		 
-		    }
+		    std::getline(linestream, data, '\t'); 
+		    int date = boost::lexical_cast<int>(date_to_id.find(data)->second);
+		    std::getline(linestream, data, '\t'); 
+		    std::string name_page = data;
+		    std::getline(linestream, data, '\t'); 
+		    int counter = boost::lexical_cast<int>(data);
 
 		    if (pages.find(name_page)==pages.end()) {
 		    	std::vector<std::pair<int, int>> tmp;
@@ -117,7 +89,7 @@ int main() {
 
   	// Sorting all the list of the data structure "pages"
   	for(std::map<std::string, std::vector<std::pair<int, int>>>::iterator it = pages.begin(); it != pages.end(); ++it) {
-  		std::sort(pages.find(it->first)->second.begin(), pages.find(it->first)->second.end(), sort_pred);
+  		std::sort(pages.find(it->first)->second.begin(), pages.find(it->first)->second.end());
 	}
 
   	// Serialize "pages" and "date_to_id"

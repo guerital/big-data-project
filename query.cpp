@@ -20,15 +20,15 @@ std::map<std::string, std::vector<std::pair<int, int>>> pages;
 std::map<std::string, int> date_to_id;
 
 void range(std::string q_name_page, std::string date1, std::string date2) {
-	std::vector<std::pair<int, int>> tmp_vect = pages.find(q_name_page)->second;
+	//std::vector<std::pair<int, int>> tmp_vect = pages.find(q_name_page)->second;
 
     int j=0;
     for (int i=date_to_id.find(date1)->second; i<=date_to_id.find(date2)->second; i++) {
-    	if (i!=tmp_vect[j].first) {
+    	if (i!=pages.find(q_name_page)->second[j].first) {
     		std::cout << " 0\n";
     		i++;
     	} else 
-       		std::cout << tmp_vect[j].second << "\n";
+       		std::cout << pages.find(q_name_page)->second[j].second << "\n";
        	j++;
         std::cout << i << "\n";
     }
@@ -36,22 +36,22 @@ void range(std::string q_name_page, std::string date1, std::string date2) {
 
 void topKRange(std::string q_name_page, std::string date1, std::string date2, int k) {
 	std::priority_queue<std::pair<int, std::string>, std::vector<std::pair<int, std::string>>, std::greater<std::pair<int, std::string>>> min_heap;
-	std::vector<std::pair<int, int>> tmp_vect = pages.find(q_name_page)->second;
+	//std::vector<std::pair<int, int>> pages.find(q_name_page)->second = pages.find(q_name_page)->second;
 
     int j=0;
     for (auto it = date_to_id.find(date1); it != date_to_id.find(date2); ++it) {
-    	if (it->second!=tmp_vect[j].first) {
+    	if (it->second!=pages.find(q_name_page)->second[j].first) {
     		if (min_heap.size()!=k) 
     			min_heap.push(std::pair<int,std::string>(0, it->first));
     		++it;
     	} else {
     		if (min_heap.size()==k) {
-    			if (min_heap.top().first<tmp_vect[j].second) {
+    			if (min_heap.top().first<pages.find(q_name_page)->second[j].second) {
 	    			min_heap.pop();
-	    			min_heap.push(std::pair<int,std::string>(tmp_vect[j].second, it->first));
+	    			min_heap.push(std::pair<int,std::string>(pages.find(q_name_page)->second[j].second, it->first));
 	    		}
 	    	} else {
-	    		min_heap.push(std::pair<int,std::string>(tmp_vect[j].second, it->first));
+	    		min_heap.push(std::pair<int,std::string>(pages.find(q_name_page)->second[j].second, it->first));
 	    	}
        	}
        	j++;    
