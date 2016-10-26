@@ -1,18 +1,18 @@
-# big-data-project
-Tools needed:
-- make
-- boost
-- g++ 11
-- wget
-- gunzip
+# Time series indexing (Big data project)
+This is my project for the course of Lab of Big Data (2016--2017)
 
-If you need the source file:
-make source
+## Libraries
+* [boost](http://www.boost.org) - library used to serialize
 
-If you need to compile the project:
-make compile
+## Tecnologies
+* make
+* g++ (11)
+* wget
+* gunzip
 
-In order to execute the application:
-./query
-
-This is my project for the course of laboratory on algorithms for big data.
+##Usage
+Download file Makefile
+> make source
+> make index
+> make generate
+> make query

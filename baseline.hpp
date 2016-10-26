@@ -18,8 +18,6 @@
 #include <utility>
 #include <vector>
 
-bool myfunction (const std::pair<int,int>& i, const std::pair<int,int>& j) { return i.first<j.first; }
-
 class baseline {
 	std::ifstream m_series; // ifstream to open file 'series.txt'
 	std::map<std::string, std::vector<std::pair<uint32_t, uint64_t>>> m_pages; // Data structure containing the index
