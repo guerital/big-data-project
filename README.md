@@ -13,9 +13,9 @@ This is my project for the course of Lab of Big Data (2016--2017)
 ##Usage
 Download file Makefile
 
-'''
+```
 make source
 make index
 make generate
 make query
-'''
+```
