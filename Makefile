@@ -3,8 +3,8 @@ source:
 	gunzip series.txt.gz
 
 index:
-	g++ -O3 -std=c++11 -o build_index build_index.cpp -lboost_serialization
-	./build_index 0 series.txt dataset_0.id
+	g++ -O3 -I ~/include -L ~/lib -std=c++11 -o build_index build_index.cpp -lboost_serialization -lsdsl	
+	./build_index 3 series.txt dataset_3.id
 	rm build_index
 	
 generate:
@@ -13,6 +13,6 @@ generate:
 	rm build_query_sets
 
 query:
-	g++ -O3 -std=c++11 -o run_queries run_queries.cpp -lboost_serialization
-	./run_queries 0 dataset_0.id .queries
+	g++ -O3 -I ~/include -L ~/lib -std=c++11 -o run_queries run_queries.cpp -lboost_serialization -lsdsl
+	./run_queries 3 dataset_3.id .queries
 	rm run_queries
