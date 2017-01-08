@@ -1,29 +1,9 @@
 #pragma once
 
-#include <algorithm>
-#include "boost/serialization/map.hpp"
-#include "boost/serialization/vector.hpp"
-#include "boost/archive/text_iarchive.hpp"
-#include "boost/archive/text_oarchive.hpp"
-#include "boost/lexical_cast.hpp"
-#include <chrono>
-#include <fstream>
-#include <iomanip>
-#include <iostream> 
-#include <map>
-#include <numeric>
-#include <queue>
-#include <sstream>
-#include <string>
-#include <utility>
-#include <vector>
-
 class Baseline {
 	std::ifstream m_series; // ifstream to open file 'series.txt'
 	std::map<std::string, std::vector<std::pair<uint32_t, uint64_t>>> m_pages; // Data structure containing the index
 	std::map<std::string, uint32_t> m_date2id; // Map structure to get an id from a date
-	std::vector<std::vector<std::string>> m_rangeQueries; // Vector with all the range queries
-	std::vector<std::vector<std::string>> m_topKQueries; // Vector with all the top k queries
 
 	public:
 		Baseline() { }
@@ -106,7 +86,7 @@ class Baseline {
 		}
 
 		// Load the needed file. If a file not needed pass a name "\O"
-		void load(const std::string& series_filename, const std::string& dataset_filename, const std::string& queries_filename) {
+		void load(const std::string& series_filename, const std::string& dataset_filename) {
         	m_series.open(series_filename);
 
 			std::ifstream dataset;
@@ -119,21 +99,10 @@ class Baseline {
         	
         	    dataset.close();
         	}
-
-        	std::ifstream queries;
-            queries.open(queries_filename);
-
-            if (queries.is_open()) {
-                boost::archive::text_iarchive iarch3(queries);
-                iarch3 >> m_rangeQueries;
-                iarch3 >> m_topKQueries;
-
-                queries.close();
-            }
 		}
 
 		// Serialize the needed file. If a file not wanted to be serialize pass a name "\O"
-		void serialize(const std::string& dataset_filename, const std::string& query_filename) {
+		void serialize(const std::string& dataset_filename) {
 			std::ofstream dataset;
 			dataset.open(dataset_filename);
 
@@ -142,15 +111,6 @@ class Baseline {
 				oarch1 << m_pages;
 				oarch1 << m_date2id;
 			}
-
-			std::ofstream queries;
-			queries.open(query_filename);
-
-			if (queries.is_open()) {
-				boost::archive::text_oarchive oarch2(queries);
-				oarch2 << m_rangeQueries;
-				oarch2 << m_topKQueries;
-			}
 		}
 
 		// Calculate the dimension of a file
@@ -158,61 +118,6 @@ class Baseline {
 			std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
 			
 			return in.tellg() / 1000000;
-		}
-
-		// Function that generate queries at random
-		void generateQueries(int num_query) {
-			std::string line;
-
-			// Scan the file to get all the date and all the name of the pages
-			std::vector<std::string> all_date;
-			std::vector<std::string> all_name_page;
-			if (m_series.is_open()) {
-				while (std::getline(m_series,line)) {
-					std::stringstream linestream(line);
-					std::string data;
-
-					std::getline(linestream, data, '\t'); 
-					all_date.push_back(data);
-					std::getline(linestream, data, '\t'); 
-					all_name_page.push_back(data);
-				}
-			}
-
-			// Remove duplicates
-			std::sort(all_date.begin(), all_date.end());
-			all_date.erase(std::unique(all_date.begin(), all_date.end()), all_date.end());
-
-			std::sort(all_name_page.begin(), all_name_page.end());
-			all_name_page.erase(std::unique(all_name_page.begin(), all_name_page.end()), all_name_page.end());
-
-			// Small, Medium and Big query
-			int range_date[] = {500, 2500, 5000};
-			for (int i=0; i<num_query/3; i++) {
-				for (int j=0; j<3; j++) {
-					std::vector<std::string> tmp_range;
-					std::vector<std::string> tmp_top;
-
-					// Generate random name page
-					int random_name_page = rand() % all_name_page.size();
-					tmp_range.push_back(all_name_page.at(random_name_page));
-					tmp_top.push_back(all_name_page.at(random_name_page));
-
-					// Generate random date
-					int random_date = rand() % (all_date.size()-range_date[j]);
-					tmp_range.push_back(all_date.at(random_date));
-					tmp_range.push_back(all_date.at(random_date+range_date[j]));
-					tmp_top.push_back(all_date.at(random_date));
-					tmp_top.push_back(all_date.at(random_date+range_date[j]));
-
-					// Generate random k
-					int k = rand() % 250 + 1;
-					tmp_top.push_back(std::to_string(k));
-
-					m_rangeQueries.push_back(tmp_range);
-					m_topKQueries.push_back(tmp_top);
-				}
-			}
 		}
 
 		// Function that compute the range query
@@ -247,7 +152,7 @@ class Baseline {
 		}
 
 		// Function that compute the top k query
-		inline std::priority_queue<std::pair<uint64_t, uint32_t>, std::vector<std::pair<uint64_t, uint32_t>>, std::greater<std::pair<uint64_t, uint32_t>>> topKRange(const std::string& q_name_page, const std::string& date1, const std::string& date2, const int& k) const {
+		inline std::vector<std::pair<uint64_t, uint32_t>> topKRange(const std::string& q_name_page, const std::string& date1, const std::string& date2, const int& k) const {
 			const std::vector<std::pair<uint32_t, uint64_t>>& tmp_vect = std::ref(m_pages.find(q_name_page)->second);
 			const int tmp_vect_size = tmp_vect.size();
 		    const int left_date = m_date2id.find(date1)->second;
@@ -282,14 +187,16 @@ class Baseline {
 		       	}    
 		    }
 
-		    return min_heap;  
-		}
+		    std::vector<std::pair<uint64_t, uint32_t>> v; 
+		    while (!min_heap.empty()) {
+		        v.push_back(std::pair<uint64_t, uint32_t>(min_heap.top().first, min_heap.top().second)); 
+		        min_heap.pop();
+		    }
 
-		std::vector<std::vector<std::string>> getRangeQueries() {
-			return m_rangeQueries;
-		}
+		    std::sort(v.begin(), v.end(), [](const std::pair<uint64_t, uint32_t> & a, const std::pair<uint64_t, uint32_t> & b) { 
+			  					return a.first>b.first; 
+			  				});
 
-		std::vector<std::vector<std::string>> getTopKQueries() {
-			return m_topKQueries;
+		    return v;   
 		}		
 };

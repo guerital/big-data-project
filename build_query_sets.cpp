@@ -1,13 +1,32 @@
-#include "baseline.hpp"
+#include <algorithm>
+#include "boost/serialization/map.hpp"
+#include "boost/serialization/vector.hpp"
+#include "boost/archive/text_iarchive.hpp"
+#include "boost/archive/text_oarchive.hpp"
+#include "boost/lexical_cast.hpp"
+#include <chrono>
+#include <fstream>
+#include <iomanip>
+#include <iostream> 
+#include <map>
+#include <numeric>
+#include <queue>
+#include <sstream>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
+
+#include "query.hpp"
 
 int main(int argc, char* argv[]) {
 	if (argc == 4) {
-		Baseline b;	// Choose this implementation because it's the only one with the method 'generateQueries'
+		Query q;	// Choose this implementation because it's the only one with the method 'generateQueries'
 
-		b.load(argv[1], "\0", "\0"); // Load the file to generate the queries
+		q.load(argv[1], "\0"); // Load the file to generate the queries
 
-		b.generateQueries(atoi(argv[2])); // Generate all the queries
+		q.generateQueries(atoi(argv[2])); // Generate all the queries
 
-		b.serialize("\0", argv[3]); // Save the generated queries
+		q.serialize(argv[3]); // Save the generated queries
  	}
 }

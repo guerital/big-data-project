@@ -1,14 +1,14 @@
 #pragma once
 
-class Baseline3 {
+class Baseline4 {
 	std::ifstream m_series; // ifstream to open file 'series.txt'
 	std::map<std::string, uint64_t> m_pages_serialize; // Data structure containing the index
-	std::map<std::string, std::pair<sdsl::bit_vector, sdsl::sd_vector<>>> m_pages;
+	std::map<std::string, std::tuple<sdsl::bit_vector, sdsl::sd_vector<>, sdsl::rmq_succinct_sct<0>>> m_pages;
 	std::map<std::string, uint32_t> m_date2id; // Map structure to get an id from a date
 	uint64_t size_sdsl;
 
 	public:
-		Baseline3() { }
+		Baseline4() { }
 
 		// Function that build the index
 		void buildIndex() {
@@ -75,12 +75,18 @@ class Baseline3 {
 					if (it->second.second[i]==0) {
 						it->second.second.erase(it->second.second.begin() + i);
 						i--;
-					} else
-						if (i!=0) it->second.second[i]+=it->second.second[i-1];
+					} 
+				}
+
+				sdsl::rmq_succinct_sct<0> rmq;
+				rmq = sdsl::rmq_succinct_sct<0>(&it->second.second);
+
+				for (int i=1; i<it->second.second.size(); i++) {
+					it->second.second[i]+=it->second.second[i-1];		
 				}
 
 				sdsl::sd_vector<> tmp_vector(it->second.second.begin(), it->second.second.end());
-				m_pages.insert(std::pair<std::string, std::pair<sdsl::bit_vector, sdsl::sd_vector<>>>(it->first, std::pair<sdsl::bit_vector, sdsl::sd_vector<>>(it->second.first, tmp_vector)));
+				m_pages.insert(std::pair<std::string, std::tuple<sdsl::bit_vector, sdsl::sd_vector<>, sdsl::rmq_succinct_sct<0>>>(it->first, std::tuple<sdsl::bit_vector, sdsl::sd_vector<>, sdsl::rmq_succinct_sct<0>>(it->second.first, tmp_vector, rmq)));
 			}
 		}
 
@@ -98,10 +104,12 @@ class Baseline3 {
 
                 sdsl::bit_vector tmp_bit_vector;
                 sdsl::sd_vector<> tmp_vector;
+                sdsl::rmq_succinct_sct<0> rmq;
                 for(auto it = m_pages_serialize.begin(); it != m_pages_serialize.end(); ++it) {
-                	sdsl::load_from_file(tmp_bit_vector, "sdsl-3/" + std::to_string(it->second) + "a.sdsl");
-                	sdsl::load_from_file(tmp_vector, "sdsl-3/" + std::to_string(it->second) + "b.sdsl");
-                	m_pages.insert(std::pair<std::string, std::pair<sdsl::bit_vector, sdsl::sd_vector<>>>(it->first, std::pair<sdsl::bit_vector, sdsl::sd_vector<>>(tmp_bit_vector, tmp_vector)));
+                	sdsl::load_from_file(tmp_bit_vector, "sdsl-4/" + std::to_string(it->second) + "a.sdsl");
+                	sdsl::load_from_file(tmp_vector, "sdsl-4/" + std::to_string(it->second) + "b.sdsl");
+                	sdsl::load_from_file(rmq, "sdsl-4/" + std::to_string(it->second) + "c.sdsl");
+                	m_pages.insert(std::pair<std::string, std::tuple<sdsl::bit_vector, sdsl::sd_vector<>, sdsl::rmq_succinct_sct<0>>>(it->first, std::tuple<sdsl::bit_vector, sdsl::sd_vector<>, sdsl::rmq_succinct_sct<0>>(tmp_bit_vector, tmp_vector, rmq)));
                 }
         	
         	    dataset.close();
@@ -119,12 +127,14 @@ class Baseline3 {
 				size_sdsl = 0;
 				for(auto it = m_pages.begin(); it != m_pages.end(); ++it) {
 					m_pages_serialize.insert(std::pair<std::string, uint64_t>(it->first, id_sdsl));
-					sdsl::store_to_file(it->second.first, "sdsl-3/" + std::to_string(id_sdsl) + "a.sdsl");
-					sdsl::store_to_file(it->second.second, "sdsl-3/" + std::to_string(id_sdsl) + "b.sdsl");
+					sdsl::store_to_file(std::get<0>(it->second), "sdsl-4/" + std::to_string(id_sdsl) + "a.sdsl");
+					sdsl::store_to_file(std::get<1>(it->second), "sdsl-4/" + std::to_string(id_sdsl) + "b.sdsl");
+					sdsl::store_to_file(std::get<2>(it->second), "sdsl-4/" + std::to_string(id_sdsl) + "c.sdsl");
 
-					std::ifstream in1("sdsl-3/" + std::to_string(id_sdsl) + "a.sdsl", std::ifstream::ate | std::ifstream::binary);
-					std::ifstream in2("sdsl-3/" + std::to_string(id_sdsl) + "b.sdsl", std::ifstream::ate | std::ifstream::binary);
-					size_sdsl += in1.tellg() + in2.tellg();
+					std::ifstream in1("sdsl-4/" + std::to_string(id_sdsl) + "a.sdsl", std::ifstream::ate | std::ifstream::binary);
+					std::ifstream in2("sdsl-4/" + std::to_string(id_sdsl) + "b.sdsl", std::ifstream::ate | std::ifstream::binary);
+					std::ifstream in3("sdsl-4/" + std::to_string(id_sdsl) + "c.sdsl", std::ifstream::ate | std::ifstream::binary);
+					size_sdsl += in1.tellg() + in2.tellg() + in3.tellg();
 
 					id_sdsl++;
 				}
@@ -144,8 +154,8 @@ class Baseline3 {
 
 		// Function that compute the range query
 		inline std::vector<uint64_t> range(const std::string& q_name_page, const std::string& date1, const std::string& date2) const {
-		    const sdsl::bit_vector & tmp_bit_vector = std::ref(m_pages.find(q_name_page)->second.first);
-		    const sdsl::sd_vector<> & tmp_counter = std::ref(m_pages.find(q_name_page)->second.second);
+		    const sdsl::bit_vector & tmp_bit_vector = std::ref(std::get<0>(m_pages.find(q_name_page)->second));
+		    const sdsl::sd_vector<> & tmp_counter = std::ref(std::get<1>(m_pages.find(q_name_page)->second));
 		    const int left_date = m_date2id.find(date1)->second;
 		    const int right_date = m_date2id.find(date2)->second;
 
@@ -166,46 +176,67 @@ class Baseline3 {
 		    return v;
 		}
 
+		struct weight_interval{
+		    uint64_t w;
+		    size_t idx, lb, rb;
+		    weight_interval(uint64_t f_w, size_t f_idx, size_t f_lb, size_t f_rb) : 
+		        w(f_w), idx(f_idx), lb(f_lb), rb(f_rb) {}
+
+		    bool operator<(const weight_interval& wi) const {
+		        return std::tie(w, idx, lb, rb) < std::tie(wi.w, wi.idx, wi.lb, wi.rb);
+		    }
+		};
+
+		inline std::vector<std::pair<uint64_t, uint32_t>> heaviest_indexes_in_range(size_t k, uint64_t i, uint64_t j, const sdsl::sd_vector<> & w, const sdsl::rmq_succinct_sct<0> & rmq) const {
+		    sdsl::sd_vector<>::select_1_type tmp_select(&w);
+
+		    std::priority_queue<weight_interval> pq;
+		    auto push_interval = [&](size_t f_lb, size_t f_rb) {
+		        if ( f_rb > f_lb ) {
+		            size_t max_idx = rmq(f_lb, f_rb-1);
+		            
+		            auto tmp = tmp_select(max_idx+1);
+		            if (max_idx>0) tmp -= tmp_select(max_idx);
+		            
+		            pq.push(weight_interval(tmp, max_idx, f_lb, f_rb));
+		        }
+		    };
+
+		    std::vector<std::pair<uint64_t, uint32_t>> res;
+		    push_interval(i, j);
+		    while ( res.size() < k and !pq.empty() ) {
+		        auto iv = pq.top(); pq.pop();
+
+		        auto tmp = tmp_select(iv.idx+1);
+		        if (iv.idx>0) tmp -= tmp_select(iv.idx);
+
+		        res.push_back(std::pair<uint64_t, uint32_t>(tmp, iv.idx+1));
+		        push_interval(iv.lb, iv.idx);
+		        push_interval(iv.idx+1, iv.rb);
+		    }
+
+		    while (res.size()<k)
+				res.push_back(std::pair<uint64_t, uint32_t>(0,0));
+		    return res; 
+		}
+
 		// Function that compute the top k query
 		inline std::vector<std::pair<uint64_t, uint32_t>> topKRange(const std::string& q_name_page, const std::string& date1, const std::string& date2, const int& k) const {
-			const sdsl::bit_vector & tmp_bit_vector = std::ref(m_pages.find(q_name_page)->second.first);
-			const sdsl::sd_vector<> & tmp_counter = std::ref(m_pages.find(q_name_page)->second.second);
+			const sdsl::bit_vector & tmp_bit_vector = std::ref(std::get<0>(m_pages.find(q_name_page)->second));
+		    const sdsl::sd_vector<> & tmp_counter = std::ref(std::get<1>(m_pages.find(q_name_page)->second));
+		    const sdsl::rmq_succinct_sct<0> & rmq = std::ref(std::get<2>(m_pages.find(q_name_page)->second));
 		    const int left_date = m_date2id.find(date1)->second;
 		    const int right_date = m_date2id.find(date2)->second;
 
-			std::priority_queue<std::pair<uint64_t, uint32_t>, std::vector<std::pair<uint64_t, uint32_t>>, std::greater<std::pair<uint64_t, uint32_t>>> min_heap;
-
 			sdsl::rank_support_v<1> tmp_rank(&tmp_bit_vector);
-			sdsl::sd_vector<>::select_1_type tmp_select(&tmp_counter);
 
-		    for (int i=left_date; i<=right_date; i++) {
-		    	if (tmp_bit_vector[i]==0) {
-		    		if (min_heap.size()!=k) min_heap.push(std::pair<uint64_t, uint32_t>(0, i));	
-		    	} else  {
-		    		uint64_t tmp = tmp_select(tmp_rank(i)+1);
-		    		if (tmp_rank(i)>0) tmp -= tmp_select(tmp_rank(i));
-	    			if (min_heap.size()==k) {
-		    			if (min_heap.top().first<tmp) {
-			    			min_heap.pop();
-			    			min_heap.push(std::pair<uint64_t, uint32_t>(tmp, i));
-			    		}
-			    	} else {
-			    		min_heap.push(std::pair<uint64_t, uint32_t>(tmp, i));
-			    	}   
-			    } 	   
-		    }
-
-		    std::vector<std::pair<uint64_t, uint32_t>> v; 
-		    while (!min_heap.empty()) {
-		    	//v.insert(v.begin(), std::pair<uint64_t, uint32_t>(min_heap.top().first, min_heap.top().second));
-		        v.push_back(std::pair<uint64_t, uint32_t>(min_heap.top().first, min_heap.top().second)); 
-		        min_heap.pop();
-		    }
-
-		    std::sort(v.begin(), v.end(), [](const std::pair<uint64_t, uint32_t> & a, const std::pair<uint64_t, uint32_t> & b) { 
-			  					return a.first>b.first; 
-			  				});
-
-		    return v;  
+			if (tmp_rank(left_date)!=tmp_rank(right_date)) 
+				return heaviest_indexes_in_range(k, tmp_rank(left_date), tmp_rank(right_date), tmp_counter, rmq);
+	
+			
+			std::vector<std::pair<uint64_t, uint32_t>> res;
+			while (res.size()<k)
+				res.push_back(std::pair<uint64_t, uint32_t>(0,0));
+			return res;
 		}		
 };
