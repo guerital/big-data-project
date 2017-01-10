@@ -32,106 +32,54 @@
 #include "baseline3.hpp"
 #include "baseline4.hpp"
 
+template<typename BaselineNumber, typename LoadFileName, typename StoreFileName>
+void execute(BaselineNumber& b, const LoadFileName& lfn, const StoreFileName& sfn) {
+	b.load(lfn, "\0"); // Load file needed to build
+
+	// Measure time construction indexes
+	std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+
+	b.buildIndex();
+
+	std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+ 	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+ 	std::cout << "Creation time indexes: " << time_span.count() << " seconds. \n";
+
+	b.serialize(sfn); // Serialize the index
+
+	std::cout << "Dimension index: " << b.size(sfn) << "MB \n"; // Print dimension of the generated index
+}
+
 int main(int argc, char* argv[]) {
 	if (argc == 4) {
-		switch (atoi(argv[1])) { // Choose witch implementation to use
+		switch (atoi(argv[1])) { // Choose which implementation to use
 			case 0: {
 				Baseline b;
-
-				b.load(argv[2], "\0"); // Load file needed to build
-
-				// Measure time construction indexes
-				std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
-
-				b.buildIndex();
-
-				std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
-			 	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-			 	std::cout << "Creation time indexes: " << time_span.count() << " seconds. \n";
-
-				b.serialize(argv[3]); // Serialize the index
-
-				std::cout << "Dimension index: " << b.size(argv[3]) << "MB \n"; // Print dimension of the generated index	
-				
+				execute(b, argv[2], argv[3]);	
+			
 				break;
 			}	
 			case 1: {
 				Baseline1 b1;
-
-				b1.load(argv[2], "\0"); // Load file needed to build
-
-				// Measure time construction indexes
-				std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
-
-				b1.buildIndex();
-
-				std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
-			 	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-			 	std::cout << "Creation time indexes: " << time_span.count() << " seconds. \n";
-
-				b1.serialize(argv[3]); // Serialize the index
-
-				std::cout << "Dimension index: " << b1.size(argv[3]) << "MB \n"; // Print dimension of the generated index	
+				execute(b1, argv[2], argv[3]);
 				
 				break;
 			}
 			case 2: {
 				Baseline2 b2;
-
-				b2.load(argv[2], "\0"); // Load file needed to build
-
-				// Measure time construction indexes
-				std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
-
-				b2.buildIndex();
-
-				std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
-			 	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-			 	std::cout << "Creation time indexes: " << time_span.count() << " seconds. \n";
-
-				b2.serialize(argv[3]); // Serialize the index
-
-				std::cout << "Dimension index: " << b2.size(argv[3]) << "MB \n"; // Print dimension of the generated index	
+				execute(b2, argv[2], argv[3]);
 				
 				break;
 			}
 			case 3: {
 				Baseline3 b3;
-
-				b3.load(argv[2], "\0"); // Load file needed to build
-
-				// Measure time construction indexes
-				std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
-
-				b3.buildIndex();
-
-				std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
-			 	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-			 	std::cout << "Creation time indexes: " << time_span.count() << " seconds. \n";
-
-				b3.serialize(argv[3]); // Serialize the index
-
-				std::cout << "Dimension index: " << b3.size(argv[3]) << "MB \n"; // Print dimension of the generated index	
+				execute(b3, argv[2], argv[3]);
 				
 				break;
 			}
 			case 4: {
 				Baseline4 b4;
-
-				b4.load(argv[2], "\0"); // Load file needed to build
-
-				// Measure time construction indexes
-				std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
-
-				b4.buildIndex();
-
-				std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
-			 	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-			 	std::cout << "Creation time indexes: " << time_span.count() << " seconds. \n";
-
-				b4.serialize(argv[3]); // Serialize the index
-
-				std::cout << "Dimension index: " << b4.size(argv[3]) << "MB \n"; // Print dimension of the generated index	
+				execute(b4, argv[2], argv[3]);
 				
 				break;
 			}
