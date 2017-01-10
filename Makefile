@@ -1,6 +1,10 @@
 BASELINE = 4
+NUM_QUERY = 100
 
 source:
+	mkdir -p sdsl-2
+	mkdir -p sdsl-3
+	mkdir -p sdsl-4
 	wget -O series.txt.gz "http://xor.di.unipi.it/~rossano/time_series.txt.gz"
 	gunzip series.txt.gz
 
@@ -11,7 +15,7 @@ index:
 	
 generate:
 	g++ -O3 -std=c++11 -o build_query_sets build_query_sets.cpp -lboost_serialization
-	./build_query_sets series.txt 100 .queries
+	./build_query_sets series.txt $(NUM_QUERY) .queries
 	rm build_query_sets
 
 query:

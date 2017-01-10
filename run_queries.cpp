@@ -59,8 +59,8 @@ void execute(BaselineNumber& b, const LoadFileName1& lfn1, const LoadFileName2& 
     }
 
     // Print the average time to make a query
-    float avg = accumulate(time_range_query.begin(), time_range_query.end(), 0.0) / time_range_query.size();
-    std::cout << "Average time to make queries: " << avg << " seconds." << std::endl;
+    float avg_range_query = accumulate(time_range_query.begin(), time_range_query.end(), 0.0) / time_range_query.size();
+    
     std::cout << "\n" << "============================================" << "\n\n";
 
     /*********************/
@@ -86,8 +86,10 @@ void execute(BaselineNumber& b, const LoadFileName1& lfn1, const LoadFileName2& 
     }
 
     // Print the average time to make a query
-    avg = accumulate(time_topk_query.begin(), time_topk_query.end(), 0.0) / time_topk_query.size();
-    std::cout << "Average time to make queries: " << avg << " seconds." << std::endl;
+    float avg_topk_query = accumulate(time_topk_query.begin(), time_topk_query.end(), 0.0) / time_topk_query.size();
+    std::cout << "\n" << "============================================" << "\n\n";
+    std::cout << "Average time to make range queries: " << avg_range_query << " seconds.\n" << std::endl;
+    std::cout << "Average time to make top k queries: " << avg_topk_query << " seconds." << std::endl;
     std::cout << "\n" << "============================================" << "\n\n";
 }
 
