@@ -183,7 +183,7 @@ class Baseline4 {
 		        w(f_w), idx(f_idx), lb(f_lb), rb(f_rb) {}
 
 		    bool operator<(const weight_interval& wi) const {
-		        return std::tie(w, idx, lb, rb) < std::tie(wi.w, wi.idx, wi.lb, wi.rb);
+		        return std::tie(w, idx, lb, rb) < std::tie(wi.w, wi.idx, wi.lb, wi.rb); // lexicographical comparison
 		    }
 		};
 
