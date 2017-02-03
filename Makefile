@@ -15,10 +15,10 @@ index:
 	
 generate:
 	g++ -O3 -std=c++11 -o build_query_sets build_query_sets.cpp -lboost_serialization
-	./build_query_sets series.txt $(NUM_QUERY) .queries
+	./build_query_sets series.txt $(NUM_QUERY) .queries-big .queries-medium .queries-small
 	rm build_query_sets
 
 query:
 	g++ -O3 -I ~/include -L ~/lib -std=c++11 -o run_queries run_queries.cpp -lboost_serialization -lsdsl
-	./run_queries $(BASELINE) dataset_$(BASELINE).id .queries
+	./run_queries $(BASELINE) dataset_$(BASELINE).id .queries-big .queries-medium .queries-small
 	rm run_queries

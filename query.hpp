@@ -2,37 +2,81 @@
 
 class Query {
 	std::ifstream m_series; // ifstream to open file 'series.txt'
-	std::vector<std::vector<std::string>> m_rangeQueries; // Vector with all the range queries
-	std::vector<std::vector<std::string>> m_topKQueries; // Vector with all the top k queries
+	std::vector<std::vector<std::string>> m_rangeQueries_b; // Vector with big range queries
+	std::vector<std::vector<std::string>> m_topKQueries_b; // Vector with big top k queries
+	std::vector<std::vector<std::string>> m_rangeQueries_m; // Vector with medium range queries
+	std::vector<std::vector<std::string>> m_topKQueries_m; // Vector with medium top k queries
+	std::vector<std::vector<std::string>> m_rangeQueries_s; // Vector with small range queries
+	std::vector<std::vector<std::string>> m_topKQueries_s; // Vector with small top k queries
 
 	public:
 		Query() { }
 
 		// Load the needed file. If a file not needed pass a name "\O"
-		void load(const std::string& series_filename, const std::string& queries_filename) {
+		void load(const std::string& series_filename, const std::string& query_filename_b, const std::string& query_filename_m, const std::string& query_filename_s) {
         	m_series.open(series_filename);
 
-        	std::ifstream queries;
-            queries.open(queries_filename);
+        	std::ifstream queries_b;
+            queries_b.open(query_filename_b);
 
-            if (queries.is_open()) {
-                boost::archive::text_iarchive iarch3(queries);
-                iarch3 >> m_rangeQueries;
-                iarch3 >> m_topKQueries;
+            if (queries_b.is_open()) {
+                boost::archive::text_iarchive iarch1(queries_b);
+                iarch1 >> m_rangeQueries_b;
+                iarch1 >> m_topKQueries_b;
 
-                queries.close();
+                queries_b.close();
+            }
+
+            std::ifstream queries_m;
+            queries_m.open(query_filename_m);
+
+            if (queries_m.is_open()) {
+                boost::archive::text_iarchive iarch2(queries_m);
+                iarch2 >> m_rangeQueries_m;
+                iarch2 >> m_topKQueries_m;
+
+                queries_m.close();
+            }
+
+            std::ifstream queries_s;
+            queries_s.open(query_filename_s);
+
+            if (queries_s.is_open()) {
+                boost::archive::text_iarchive iarch3(queries_s);
+                iarch3 >> m_rangeQueries_s;
+                iarch3 >> m_topKQueries_s;
+
+                queries_s.close();
             }
 		}
 
 		// Serialize the needed file. If a file not wanted to be serialize pass a name "\O"
-		void serialize(const std::string& query_filename) {
-			std::ofstream queries;
-			queries.open(query_filename);
+		void serialize(const std::string& query_filename_b, const std::string& query_filename_m, const std::string& query_filename_s) {
+			std::ofstream queries_b;
+			queries_b.open(query_filename_b);
 
-			if (queries.is_open()) {
-				boost::archive::text_oarchive oarch2(queries);
-				oarch2 << m_rangeQueries;
-				oarch2 << m_topKQueries;
+			if (queries_b.is_open()) {
+				boost::archive::text_oarchive oarch1(queries_b);
+				oarch1 << m_rangeQueries_b;
+				oarch1 << m_topKQueries_b;
+			}
+
+			std::ofstream queries_m;
+			queries_m.open(query_filename_m);
+
+			if (queries_m.is_open()) {
+				boost::archive::text_oarchive oarch2(queries_m);
+				oarch2 << m_rangeQueries_m;
+				oarch2 << m_topKQueries_m;
+			}
+
+			std::ofstream queries_s;
+			queries_s.open(query_filename_s);
+
+			if (queries_s.is_open()) {
+				boost::archive::text_oarchive oarch3(queries_s);
+				oarch3 << m_rangeQueries_s;
+				oarch3 << m_topKQueries_s;
 			}
 		}
 
@@ -63,7 +107,7 @@ class Query {
 			all_name_page.erase(std::unique(all_name_page.begin(), all_name_page.end()), all_name_page.end());
 
 			// Small, Medium and Big query
-			int range_date[] = {500, 2500, 5000};
+			int range_date[] = {5000, 2500, 500};
 			for (int i=0; i<num_query/3; i++) {
 				for (int j=0; j<3; j++) {
 					std::vector<std::string> tmp_range;
@@ -96,17 +140,30 @@ class Query {
 					}
 					tmp_top.push_back(std::to_string(k));
 
-					m_rangeQueries.push_back(tmp_range);
-					m_topKQueries.push_back(tmp_top);
+					switch (j) { 
+						case 0: 
+							m_rangeQueries_b.push_back(tmp_range);
+							m_topKQueries_b.push_back(tmp_top);
+							break;
+						case 1:
+							m_rangeQueries_m.push_back(tmp_range);
+							m_topKQueries_m.push_back(tmp_top);
+							break;
+						case 2:
+							m_rangeQueries_s.push_back(tmp_range);
+							m_topKQueries_s.push_back(tmp_top);
+							break;
+					}
 				}
 			}
 		}
 
-		std::vector<std::vector<std::string>> getRangeQueries() {
-			return m_rangeQueries;
-		}
+		std::vector<std::vector<std::string>> getRangeQueriesB() { return m_rangeQueries_b; }
+		std::vector<std::vector<std::string>> getTopKQueriesB() { return m_topKQueries_b; }
 
-		std::vector<std::vector<std::string>> getTopKQueries() {
-			return m_topKQueries;
-		}		
+		std::vector<std::vector<std::string>> getRangeQueriesM() { return m_rangeQueries_m; }
+		std::vector<std::vector<std::string>> getTopKQueriesM() { return m_topKQueries_m; }		
+
+		std::vector<std::vector<std::string>> getRangeQueriesS() { return m_rangeQueries_s; }
+		std::vector<std::vector<std::string>> getTopKQueriesS() { return m_topKQueries_s; }				
 };

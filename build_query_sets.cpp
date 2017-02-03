@@ -20,13 +20,13 @@
 #include "query.hpp"
 
 int main(int argc, char* argv[]) {
-	if (argc == 4) {
+	if (argc == 6) {
 		Query q;	// Choose this implementation because it's the only one with the method 'generateQueries'
 
-		q.load(argv[1], "\0"); // Load the file to generate the queries
+		q.load(argv[1], "\0", "\0", "\0"); // Load the file to generate the queries
 
 		q.generateQueries(atoi(argv[2])); // Generate all the queries
 
-		q.serialize(argv[3]); // Save the generated queries
+		q.serialize(argv[3], argv[4], argv[5]); // Save the generated queries
  	}
 }

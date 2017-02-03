@@ -145,22 +145,28 @@ class Baseline3 {
 		// Function that compute the range query
 		inline std::vector<uint64_t> range(const std::string& q_name_page, const std::string& date1, const std::string& date2) const {
 		    const sdsl::bit_vector & tmp_bit_vector = std::ref(m_pages.find(q_name_page)->second.first);
-		    const sdsl::sd_vector<> & tmp_counter = std::ref(m_pages.find(q_name_page)->second.second);
+			const sdsl::rank_support_v<1> tmp_rank_support(&m_pages.find(q_name_page)->second.first);
+			const sdsl::sd_vector<> & tmp_counter = std::ref(m_pages.find(q_name_page)->second.second);
+			const sdsl::sd_vector<>::select_1_type tmp_select(&m_pages.find(q_name_page)->second.second);
 		    const int left_date = m_date2id.find(date1)->second;
 		    const int right_date = m_date2id.find(date2)->second;
 
 		    std::vector<uint64_t> v; 
 
-		    sdsl::rank_support_v<1> tmp_rank(&tmp_bit_vector);
-		    sdsl::sd_vector<>::select_1_type tmp_select(&tmp_counter);
-
+		    int num_1 = tmp_rank_support(left_date);
+		    int pred = (num_1!=0) ? tmp_select(num_1) : 0;
 		    for (int i=left_date; i<=right_date; i++) {          
 		        if (tmp_bit_vector[i]==0)
 		        	v.push_back(0);
-		        else if (tmp_rank(i)!=0)
-		        	v.push_back(tmp_select(tmp_rank(i)+1)-tmp_select(tmp_rank(i)));	
-		        else
-		        	v.push_back(tmp_select(tmp_rank(i)+1));  
+		        else {
+		        	int curr = tmp_select(num_1+1);
+		        	if (num_1!=0)
+			        	v.push_back(curr-pred);	
+			        else
+			        	v.push_back(curr);
+			        num_1++;
+			        pred = curr;
+			    }  
 		    }
 
 		    return v;
@@ -169,21 +175,23 @@ class Baseline3 {
 		// Function that compute the top k query
 		inline std::vector<std::pair<uint64_t, uint32_t>> topKRange(const std::string& q_name_page, const std::string& date1, const std::string& date2, const int& k) const {
 			const sdsl::bit_vector & tmp_bit_vector = std::ref(m_pages.find(q_name_page)->second.first);
+			const sdsl::rank_support_v<1> tmp_rank_support(&m_pages.find(q_name_page)->second.first);
 			const sdsl::sd_vector<> & tmp_counter = std::ref(m_pages.find(q_name_page)->second.second);
+			const sdsl::sd_vector<>::select_1_type tmp_select(&m_pages.find(q_name_page)->second.second);
 		    const int left_date = m_date2id.find(date1)->second;
 		    const int right_date = m_date2id.find(date2)->second;
 
 			std::priority_queue<std::pair<uint64_t, uint32_t>, std::vector<std::pair<uint64_t, uint32_t>>, std::greater<std::pair<uint64_t, uint32_t>>> min_heap;
 
-			sdsl::rank_support_v<1> tmp_rank(&tmp_bit_vector);
-			sdsl::sd_vector<>::select_1_type tmp_select(&tmp_counter);
-
+			int num_1 = tmp_rank_support(left_date);
+			uint64_t pred = (num_1!=0) ? tmp_select(num_1) : 0;
 		    for (int i=left_date; i<=right_date; i++) {
 		    	if (tmp_bit_vector[i]==0) {
 		    		if (min_heap.size()!=k) min_heap.push(std::pair<uint64_t, uint32_t>(0, i));	
 		    	} else  {
-		    		uint64_t tmp = tmp_select(tmp_rank(i)+1);
-		    		if (tmp_rank(i)>0) tmp -= tmp_select(tmp_rank(i));
+		    		uint64_t curr = tmp_select(num_1+1);
+		    		uint64_t tmp = curr;
+		    		if (num_1>0) tmp -= pred;
 	    			if (min_heap.size()==k) {
 		    			if (min_heap.top().first<tmp) {
 			    			min_heap.pop();
@@ -191,13 +199,14 @@ class Baseline3 {
 			    		}
 			    	} else {
 			    		min_heap.push(std::pair<uint64_t, uint32_t>(tmp, i));
-			    	}   
+			    	}
+			    	num_1++;
+			        pred = curr;   
 			    } 	   
 		    }
 
 		    std::vector<std::pair<uint64_t, uint32_t>> v; 
 		    while (!min_heap.empty()) {
-		    	//v.insert(v.begin(), std::pair<uint64_t, uint32_t>(min_heap.top().first, min_heap.top().second));
 		        v.push_back(std::pair<uint64_t, uint32_t>(min_heap.top().first, min_heap.top().second)); 
 		        min_heap.pop();
 		    }
